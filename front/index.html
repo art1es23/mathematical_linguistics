@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SearchPresent</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/input.scss">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+<div class="col-8 title_contant_container" style="margin-top: 20%">
+<div class="title_contant_wrapper">
+    <div class="title_contant_text_container">
+     <h3 class="custom_title_h">Symak Denys</h3>
+    </div>
+    <div class="title_input_container">
+        <div>
+            <div class="search">
+                <div class="bar">
+                    <div class="icon">
+                        <i></i>
+                    </div>
+                </div>
+                <form>
+                    <input type="text" id="search">
+                </form>
+                <div class="close"></div>
+                <ul id='list_of_teachers'></ul>
+                
+            </div>
+
+            <em>Type a kind word and hit <strong>Enter</strong></em>
+
+        </div>
+
+        <!-- dribbble -->
+
+        <a class="dribbble" href="https://dribbble.com/shots/5282901-Search-field-animation-v2" target="_blank"><img src="https://cdn.dribbble.com/assets/dribbble-ball-mark-2bd45f09c2fb58dbbfb44766d5d1d07c5a12972d602ef8b32204d28fa3dda554.svg" alt=""></a>
+    </div>
+</div>
+</div>
+</body>
+</html>
+<script src="jquery-3.5.1.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+
+    $(document).ready(function() {
+
+        $('.search').each(function() {
+          
+            var self = $(this);
+            var form = self.children('form');
+            var input = form.children('input');
+            var span = $('<span />').appendTo(form);
+            var bar = self.children('.bar');
+            var close = self.children('.close');
+            var list = self.children('ul');
+
+            input.keypress(function (e) {
+                if(e.which && e.charCode) {
+                    resizeForText(input, span, $(this).val() + String.fromCharCode(e.keyCode | e.charCode));
+                }
+            });
+
+            input.keyup(function(e) {
+                if(e.keyCode === 8 || e.keyCode === 46) {
+                    resizeForText(input, span, $(this).val());
+                }
+            });
+
+            resizeForText(input, span, self.val());
+            form.submit(function(e) {
+                var formData = {
+                    text: $("#search").val(),
+                }; 
+                
+                $.ajax({
+	                url: 'http://127.0.0.1:8000/api/top/',         /* Куда пойдет запрос */
+	                method: 'get',             /* Метод передачи (post или get) */
+	                dataType: 'json',          /* Тип данных в ответе (xml, json, script, html). */
+	                data: formData,     /* Параметры передаваемые в запросе. */
+	                success: function(data){   /* функция которая будет выполнена после успешного запроса.  */
+                        console.log(data.length)
+                        var i, html;
+                        html = '';
+                        for (i = 0; i < data.length; i++) {
+        
+                        
+                            html += '<li>' + '<a target="_blank">'+
+                                '<img  src="'+data[i]["photo_url"]+'">'+
+                                '<h5 style="margin-left: 90px;">'+data[i]["name"]+'</h5>'+
+                                '<p style="width: 300px;font-size: 15px; word-wrap: break-word; margin-left: 90px;">'+
+                                    data[i]['description']+'</p>'+'</li>';
+                        }    
+                        html += '';
+                        $("#list_of_teachers").html(html);
+	                }
+                });
+                e.preventDefault();
+                if(!self.hasClass('prepare')) {
+                    input.blur();
+                    $('<span />').text(input.val()).appendTo(bar);
+                    self.addClass('prepare submit');
+                    setTimeout(function() {
+                        self.removeClass('submit');
+                    }, 200);
+                    setTimeout(function() {
+                        self.addClass('animate');
+                        bar.animate({
+                            width: (self.outerWidth() - 32)
+                        }, 800, function() {
+                            var searchW = ((list.outerWidth() + 32) > (72 + bar.outerWidth())) ? (list.outerWidth() + 32) : 72 + bar.outerWidth();
+                            self.animate({
+                                width: searchW
+                            }, 400);
+                            setTimeout(function() {
+                                self.animate({
+                                    height: self.outerHeight() + list.outerHeight()
+                                }, 500, function() {
+                                    list.addClass('show');
+                                });
+                            }, 200);
+                        });
+                        setTimeout(function() {
+                            self.addClass('done');
+                        }, 800);
+                    }, 1250);
+                }
+            });
+
+            close.on('click', function(e) {
+                self.removeClass('done');
+                setTimeout(function() {
+                    input.val('');
+                    bar.animate({
+                        width: 32
+                    }, 1000, function() {
+                        self.addClass('reset');
+                        bar.children('span').remove();
+                        setTimeout(function() {
+                            self.removeClass('animate reset prepare');
+                            setTimeout(function() {
+                                input.animate({
+                                    width: 32
+                                }, 400, function() {
+                                    bar.removeAttr('style');
+                                });
+                            }, 200);
+                        }, 400);
+                    });
+                    list.removeClass('show');
+                    setTimeout(function() {
+                        self.animate({
+                            height: 62
+                        }, 400, function() {
+                            self.animate({
+                                width: 92
+                            }, 400, function() {
+                                self.removeAttr('style');
+                            });
+                        });
+                    }, 200);
+                }, 500);
+            });
+
+        });
+
+    });
+
+    function resizeForText(input, span, text) {
+        text = (!text) ? ' ' : text;
+        span.text(text);
+        input.width(span.width());
+    }
+</script>
